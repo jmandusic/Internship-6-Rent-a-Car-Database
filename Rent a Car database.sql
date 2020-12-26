@@ -129,14 +129,6 @@ order by NumberOfVehicles DESC
 
 
 
---get number of vehicles by every brand
-
-select Vehicles.Brand, COUNT(*) as NumberOfVehicles from Vehicles
-group by Vehicles.Brand
-order by NumberOfVehicles DESC
-
-
-
 --last 5 rents by defined employee
 
 select TOP 5 e.FirstName, e.LastName, v.Brand, v.Model, v.Color, r.RentedOn, r.StartOfRent, r.RentedDays from Employees e
@@ -146,11 +138,27 @@ where EmployeeId = 3 order by RentedOn DESC
 
 
 
-
 --get all customers ever
 
 select DISTINCT(c.Id), c.FirstName, c.LastName, c.CustomerID, c.DateOfBirth, c.DriverLicenseNumber from Rents r
 JOIN Customers c ON r.CustomerId = c.Id
+
+
+
+--get time of last rent for all customers
+
+select MIN(e.FirstName) as FirstName, MIN(e.LastName) as LastName, MAX(r.RentedOn) as LastRent from Rents r
+JOIN Employees e ON r.EmployeeId = e.Id
+group by r.EmployeeId
+order by LastRent DESC
+
+
+
+--get number of vehicles by every brand
+
+select Vehicles.Brand, COUNT(*) as NumberOfVehicles from Vehicles
+group by Vehicles.Brand
+order by NumberOfVehicles DESC
 
 
 
@@ -180,3 +188,87 @@ select v.Type, COUNT(*) RentsLongerThanAverage from Rents r
 JOIN Vehicles v ON r.VehicleId = v.Id
 where RentedDays > (select AVG(RentedDays) from Rents)
 group by v.Type
+
+
+
+--get price for defined rent
+
+select c.FirstName, c.LastName, r.CardNumber, r.RentedOn, r.StartOfRent, r.RentedDays, v.Brand, v.Model, v.Color, 
+case
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61 OR
+	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275 OR
+	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61
+	then RentedDays * WinterRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275 AND
+	DATEPART(dayofyear, StartOfRent) < DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent))
+	then RentedDays * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01') * WinterRate + 
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02', DATEADD(dd, RentedDays, StartOfRent)) * WinterRate +
+	(275 - 61) * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275 AND
+	DATEPART(dayofyear, StartOfRent) > DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent))
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02') * SummerRate + 
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01', DATEADD(dd, RentedDays, StartOfRent)) * SummerRate +
+	(60 + 365 - 275) * WinterRate
+
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01') * WinterRate +
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01', DATEADD(dd, RentedDays, StartOfRent)) * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02') * SummerRate +
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02', DATEADD(dd, RentedDays, StartOfRent)) * WinterRate
+
+end as Price
+from Rents r
+JOIN Vehicles v ON r.VehicleId = v.Id
+JOIN Customers c ON r.CustomerId = c.Id
+JOIN Employees e ON r.EmployeeId = e.Id
+where r.CustomerId = 10 AND r.VehicleId = 17 AND r.EmployeeId = 1
+
+
+
+--archive finished rents with price information
+
+select r.CustomerId, r.VehicleId, r.EmployeeId, r.CardNumber, r.RentedOn, r.StartOfRent, r.RentedDays, 
+case
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61 OR
+	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275 OR
+	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61
+	then RentedDays * WinterRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275 AND
+	DATEPART(dayofyear, StartOfRent) < DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent))
+	then RentedDays * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01') * WinterRate + 
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02', DATEADD(dd, RentedDays, StartOfRent)) * WinterRate +
+	(275 - 61) * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275 AND
+	DATEPART(dayofyear, StartOfRent) > DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent))
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02') * SummerRate + 
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01', DATEADD(dd, RentedDays, StartOfRent)) * SummerRate +
+	(60 + 365 - 275) * WinterRate
+
+	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) BETWEEN 61 AND 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01') * WinterRate +
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-03-01', DATEADD(dd, RentedDays, StartOfRent)) * SummerRate
+
+	when DATEPART(dayofyear, StartOfRent) BETWEEN 61 AND 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275
+	then DATEDIFF(dd, StartOfRent, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02') * SummerRate +
+	DATEDIFF(dd, CAST(YEAR(StartOfRent) as nvarchar) + '-10-02', DATEADD(dd, RentedDays, StartOfRent)) * WinterRate
+
+end as Price
+INTO FinishedRents from Rents r
+JOIN Vehicles v ON r.VehicleId = v.Id
+where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
+
+select * from FinishedRents
+
+delete from Rents where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
