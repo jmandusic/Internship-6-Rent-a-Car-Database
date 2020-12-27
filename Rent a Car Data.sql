@@ -1,6 +1,6 @@
-create database Rent_a_Car
+create database Rent_a_Car_Database
 
-use Rent_a_Car
+use Rent_a_Car_Database
 
 create table Employees(
 	Id int IDENTITY(1,1) PRIMARY KEY,
@@ -9,14 +9,6 @@ create table Employees(
 	WeeklyWorkingHours int NOT NULL CHECK(WeeklyWorkingHours BETWEEN 18 AND 60)
 )
 
-create table Customers(
-	Id int IDENTITY(1,1) PRIMARY KEY,
-	FirstName nvarchar(100) NOT NULL,
-	LastName nvarchar(100) NOT NULL,
-	CustomerID nvarchar(100) NOT NULL,
-	DateOfBirth datetime2 NOT NULL,
-	DriverLicenseNumber nvarchar(100) NOT NULL
-)
 
 create table Vehicles(
 	Id int IDENTITY(1,1) PRIMARY KEY,
@@ -34,10 +26,14 @@ create table Vehicles(
 )
 
 create table Rents(
-	CustomerId int FOREIGN KEY REFERENCES Customers(Id) NOT NULL,
 	VehicleId int FOREIGN KEY REFERENCES Vehicles(Id) NOT NULL,
 	EmployeeId int FOREIGN KEY REFERENCES Employees(Id) NOT NULL,
-	CONSTRAINT RentsPrimaryKey PRIMARY KEY(CustomerId, VehicleId, EmployeeId),
+	CONSTRAINT RentsPrimaryKey PRIMARY KEY(VehicleId, EmployeeId),
+	CustomerFirstName nvarchar(100) NOT NULL,
+	CustomerLastName nvarchar(100) NOT NULL,
+	CustomerID nvarchar(100) NOT NULL,
+	DateOfBirth datetime2 NOT NULL,
+	DriverLicenseNumber nvarchar(100) NOT NULL,
 	CardNumber nvarchar(100) NOT NULL,
 	RentedOn datetime2 NOT NULL,
 	StartOfRent datetime2 NOT NULL,
@@ -50,18 +46,6 @@ insert into Employees(FirstName, LastName, WeeklyWorkingHours) VALUES
 ('Stipe', 'Stipic', 45),
 ('Klara', 'Klaric', 50),
 ('Petar', 'Petric', 40)
-
-insert into Customers(FirstName, LastName, CustomerID, DateOfBirth, DriverLicenseNumber) VALUES
-('Marko', 'Markic', '98234718920', '1992-07-19', '13475692'),
-('Kate', 'Katic', '20391345021', '1995-09-25', '10873947'),
-('Mirko', 'Mirkic', '06391821731', '2001-11-18', '90278301'),
-('Sara', 'Saric', '09189027407', '1985-03-13', '29865743'),
-('Ivo', 'Ivic', '21845029491', '1978-10-01', '20390485'),
-('Luka', 'Lukic', '09827465390', '2002-01-11', '78017390'),
-('Marija', 'Maric', '00276491837', '1991-04-01', '78017834'),
-('Lovre', 'Lovric', '18736491230', '1993-11-27', '40039872'),
-('Ana', 'Anic', '08719376517', '1968-09-12', '18346702'),
-('Toma', 'Tomic', '78926501901', '1999-02-23', '12345678')
 
 insert into Vehicles(Type, Model, Brand, Color, Kilometers, ManufactureYear, Registration, RegisteredOn, ExpiresOn, WinterRate, SummerRate) VALUES
 ('small car', 'A1', 'Audi', 'black', 25000, '2015', 'DA-123-AC', '2020-05-17', '2021-05-17', 70, 130),
@@ -85,29 +69,29 @@ insert into Vehicles(Type, Model, Brand, Color, Kilometers, ManufactureYear, Reg
 ('scooter', 'XMAX', 'Yamaha', 'green', NULL, '2020', 'DA-555-KK', '2020-09-18', '2021-09-18', 50, 100),
 ('van', 'Vivaro', 'Opel', 'yellow', 150000, '2000', 'DA-829-ZU', '2020-01-03', '2021-01-03', 150, 250)
 
-insert into Rents(CustomerId, VehicleId, EmployeeId, CardNumber, RentedOn, StartOfRent, RentedDays) VALUES
-(1, 2, 3, '4704-3789-8623-3864', '2020-06-07', '2020-06-11', 12.5),
-(4, 13, 3, '3801-5284-2910-7491', '2020-11-27', '2020-11-30', 7),
-(9, 12, 3, '2017-7294-6394-9164', '2020-03-17', '2020-03-21', 3),
-(10,14, 3, '1749-9104-6185-0175', '2020-09-18', '2020-09-28', 14),
-(7, 19, 3, '0374-6385-2947-2003', '2020-10-12', '2020-10-18', 1.5),
-(8, 1, 3, '7294-0385-4902-1034', '2020-09-13', '2020-10-03', 24),
-(3, 8, 1, '1234-8294-9026-0175', '2020-07-02', '2020-07-14', 13.5),
-(4, 10, 1, '3801-5284-2910-7491', '2020-10-07', '2020-10-11', 11),
-(6, 4, 1, '9035-0927-6285-9175', '2020-02-28', '2020-02-28', 6),
-(10, 17, 1, '1749-9104-6185-0175', '2020-11-29', '2020-12-13', 15),
-(2, 7, 2, '9274-0184-1675-1920', '2020-08-07', '2020-08-15', 4),
-(5, 3, 2, '4570-9205-7295-1046', '2020-12-03', '2020-12-16', 7),
-(9, 12, 2, '2017-7294-6394-9164', '2019-08-14', '2019-08-20', 7),
-(4, 15, 2, '3801-5284-2910-7491', '2020-12-25', '2020-12-25', 0.5),
-(6, 20, 4, '9035-0927-6285-9175', '2020-02-11', '2020-02-28', 11.5),
-(3, 18, 4, '1234-8294-9026-0175', '2019-07-05', '2019-07-11', 3),
-(5, 9, 4, '4570-9205-7295-1046', '2020-10-18', '2020-10-21', 12),
-(4, 16, 4, '3801-5284-2910-7491', '2020-01-30', '2020-02-05', 8),
-(7, 5, 5, '0374-6385-2947-2003', '2020-05-13', '2020-05-13', 3.5),
-(2, 11, 5, '9274-0184-1675-1920', '2019-11-06', '2019-11-08', 1),
-(1, 6, 5, '4704-3789-8623-3864', '2020-09-25', '2020-09-26', 10),
-(3, 17, 5, '1234-8294-9026-0175', '2020-11-17', '2020-11-17', 7)
+insert into Rents(CustomerFirstName, CustomerLastName, CustomerID, DateOfBirth, DriverLicenseNumber, VehicleId, EmployeeId, CardNumber, RentedOn, StartOfRent, RentedDays) VALUES
+('Marko', 'Markic', '98234718920', '1992-07-19', '13475692', 2, 3, '4704-3789-8623-3864', '2020-06-07', '2020-06-11', 12.5),
+('Sara', 'Saric', '09189027407', '1985-03-13', '29865743', 13, 3, '3801-5284-2910-7491', '2020-11-27', '2020-11-30', 7),
+('Ana', 'Anic', '08719376517', '1968-09-12', '18346702', 12, 3, '2017-7294-6394-9164', '2020-03-17', '2020-03-21', 3),
+('Toma', 'Tomic', '78926501901', '1999-02-23', '12345678',14, 3, '1749-9104-6185-0175', '2020-09-18', '2020-09-28', 14),
+('Marija', 'Maric', '00276491837', '1991-04-01', '78017834', 19, 3, '0374-6385-2947-2003', '2020-10-12', '2020-10-18', 1.5),
+('Lovre', 'Lovric', '18736491230', '1993-11-27', '40039872', 1, 3, '7294-0385-4902-1034', '2020-09-13', '2020-10-03', 24),
+('Mirko', 'Mirkic', '06391821731', '2001-11-18', '90278301', 8, 1, '1234-8294-9026-0175', '2020-07-02', '2020-07-14', 13.5),
+('Sara', 'Saric', '09189027407', '1985-03-13', '29865743', 10, 1, '3801-5284-2910-7491', '2020-10-07', '2020-10-11', 11),
+('Luka', 'Lukic', '09827465390', '2002-01-11', '78017390', 4, 1, '9035-0927-6285-9175', '2020-02-28', '2020-02-28', 6),
+('Toma', 'Tomic', '78926501901', '1999-02-23', '12345678', 17, 1, '1749-9104-6185-0175', '2020-11-29', '2020-12-13', 15),
+('Kate', 'Katic', '20391345021', '1995-09-25', '10873947', 7, 2, '9274-0184-1675-1920', '2020-08-07', '2020-08-15', 4),
+('Ivo', 'Ivic', '21845029491', '1978-10-01', '20390485', 3, 2, '4570-9205-7295-1046', '2020-12-03', '2020-12-16', 7),
+('Ana', 'Anic', '08719376517', '1968-09-12', '18346702', 12, 2, '2017-7294-6394-9164', '2019-08-14', '2019-08-20', 7),
+('Sara', 'Saric', '09189027407', '1985-03-13', '29865743', 15, 2, '3801-5284-2910-7491', '2020-12-25', '2020-12-25', 0.5),
+('Luka', 'Lukic', '09827465390', '2002-01-11', '78017390', 20, 4, '9035-0927-6285-9175', '2020-02-11', '2020-02-28', 11.5),
+('Mirko', 'Mirkic', '06391821731', '2001-11-18', '90278301', 18, 4, '1234-8294-9026-0175', '2019-07-05', '2019-07-11', 3),
+('Ivo', 'Ivic', '21845029491', '1978-10-01', '20390485', 9, 4, '4570-9205-7295-1046', '2020-10-18', '2020-10-21', 12),
+('Sara', 'Saric', '09189027407', '1985-03-13', '29865743', 16, 4, '3801-5284-2910-7491', '2020-01-30', '2020-02-05', 8),
+('Marija', 'Maric', '00276491837', '1991-04-01', '78017834', 5, 5, '0374-6385-2947-2003', '2020-05-13', '2020-05-13', 3.5),
+('Kate', 'Katic', '20391345021', '1995-09-25', '10873947', 11, 5, '9274-0184-1675-1920', '2019-11-06', '2019-11-08', 1),
+('Marko', 'Markic', '98234718920', '1992-07-19', '13475692', 6, 5, '4704-3789-8623-3864', '2020-09-25', '2020-09-26', 10),
+('Mirko', 'Mirkic', '06391821731', '2001-11-18', '90278301', 17, 5, '1234-8294-9026-0175', '2020-11-17', '2020-11-17', 7)
 
 --get all vehicles with expired registration
 
@@ -140,8 +124,8 @@ where EmployeeId = 3 order by RentedOn DESC
 
 --get all customers ever
 
-select DISTINCT(c.Id), c.FirstName, c.LastName, c.CustomerID, c.DateOfBirth, c.DriverLicenseNumber from Rents r
-JOIN Customers c ON r.CustomerId = c.Id
+select DISTINCT(CustomerID), CustomerFirstName, CustomerLastName, DateOfBirth, DriverLicenseNumber from Rents 
+
 
 
 
@@ -193,7 +177,7 @@ group by v.Type
 
 --get price for defined rent
 
-select c.FirstName, c.LastName, r.CardNumber, r.RentedOn, r.StartOfRent, r.RentedDays, v.Brand, v.Model, v.Color, 
+select r.CustomerFirstName, r.CustomerLastName, r.CardNumber, r.RentedOn, r.StartOfRent, r.RentedDays, v.Brand, v.Model, v.Color, 
 case
 	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61 OR
 	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275 OR
@@ -226,15 +210,14 @@ case
 end as Price
 from Rents r
 JOIN Vehicles v ON r.VehicleId = v.Id
-JOIN Customers c ON r.CustomerId = c.Id
 JOIN Employees e ON r.EmployeeId = e.Id
-where r.CustomerId = 10 AND r.VehicleId = 17 AND r.EmployeeId = 1
+where r.CustomerID = '78926501901' AND r.VehicleId = 17 AND r.EmployeeId = 1
 
 
 
 --archive finished rents with price information
 
-select r.CustomerId, r.VehicleId, r.EmployeeId, r.CardNumber, r.RentedOn, r.StartOfRent, r.RentedDays, 
+select *, 
 case
 	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61 OR
 	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275 OR
@@ -272,3 +255,4 @@ where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
 select * from FinishedRents
 
 delete from Rents where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
+
