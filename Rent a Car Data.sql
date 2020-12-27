@@ -1,6 +1,6 @@
-create database Rent_a_Car_Database
+create database Rent_a_Car
 
-use Rent_a_Car_Database
+use Rent_a_Car
 
 create table Employees(
 	Id int IDENTITY(1,1) PRIMARY KEY,
@@ -26,9 +26,9 @@ create table Vehicles(
 )
 
 create table Rents(
+	Id int IDENTITY(1,1) PRIMARY KEY,
 	VehicleId int FOREIGN KEY REFERENCES Vehicles(Id) NOT NULL,
 	EmployeeId int FOREIGN KEY REFERENCES Employees(Id) NOT NULL,
-	CONSTRAINT RentsPrimaryKey PRIMARY KEY(VehicleId, EmployeeId),
 	CustomerFirstName nvarchar(100) NOT NULL,
 	CustomerLastName nvarchar(100) NOT NULL,
 	CustomerID nvarchar(100) NOT NULL,
@@ -217,7 +217,8 @@ where r.CustomerID = '78926501901' AND r.VehicleId = 17 AND r.EmployeeId = 1
 
 --archive finished rents with price information
 
-select *, 
+select r.CustomerFirstName, r.CustomerLastName, r.CustomerID, r.DateOfBirth, r.DriverLicenseNumber, r.CardNumber,
+r.VehicleId, r.EmployeeId, r.RentedOn, r.StartOfRent, r.RentedDays, 
 case
 	when DATEPART(dayofyear, StartOfRent) < 61 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) < 61 OR
 	DATEPART(dayofyear, StartOfRent) > 275 AND DATEPART(dayofyear, DATEADD(dd, RentedDays, StartOfRent)) > 275 OR
@@ -255,4 +256,5 @@ where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
 select * from FinishedRents
 
 delete from Rents where DATEADD(dd, RentedDays, StartOfRent) < GETDATE()
+
 
